@@ -26,9 +26,11 @@ from donkeycar.parts.clock import Timestamp
 from donkeycar.parts.datastore import TubGroup, TubWriter
 from donkeycar.parts.keras import KerasLinear
 from donkeycar.parts.transform import Lambda
+from donkeycar.parts.imu import Mpu6050
 
 
-def drive(cfg, model_path=None, use_chaos=False):
+
+def drive(cfg, model_path=None, use_imu=None, use_chaos=False):
 
     """
     Construct a working robotic vehicle from many parts.
@@ -39,6 +41,20 @@ def drive(cfg, model_path=None, use_chaos=False):
     Parts may have named outputs and inputs. The framework handles passing named outputs
     to parts requesting the same named input.
     """
+    
+    inputs = ['cam/image_array']
+    
+    if use_imu is not False:
+        if cfg.HAVE_IMU:
+            imu = Mpu6050()
+            V.add(imu, outputs=['imu/acl_x', 'imu/acl_y', 'imu/acl_z',
+                  'imu/gyr_x', 'imu/gyr_y', 'imu/gyr_z'], threaded=True)
+            #Run the pilot if the mode is not user.
+            inputs=['cam/image_array',
+                'imu/acl_x', 'imu/acl_y', 'imu/acl_z',
+                'imu/gyr_x', 'imu/gyr_y', 'imu/gyr_z']
+            
+        
 
     V = dk.vehicle.Vehicle()
 
@@ -50,7 +66,7 @@ def drive(cfg, model_path=None, use_chaos=False):
 
     ctr = LocalWebController(use_chaos=use_chaos)
     V.add(ctr,
-          inputs=['cam/image_array'],
+          inputs=inputs,
           outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
           threaded=True)
 
@@ -113,6 +129,11 @@ def drive(cfg, model_path=None, use_chaos=False):
     # add tub to save data
     inputs = ['cam/image_array', 'user/angle', 'user/throttle', 'user/mode', 'timestamp']
     types = ['image_array', 'float', 'float',  'str', 'str']
+    if cfg.HAVE_IMU:
+            inputs += ['imu/acl_x', 'imu/acl_y', 'imu/acl_z',
+            'imu/gyr_x', 'imu/gyr_y', 'imu/gyr_z']
+            types +=['float', 'float', 'float',
+               'float', 'float', 'float']
 
     # multiple tubs
     # th = TubHandler(path=cfg.DATA_PATH)
