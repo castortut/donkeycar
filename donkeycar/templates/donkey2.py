@@ -64,9 +64,23 @@ def drive(cfg, model_path=None, use_imu=None, use_chaos=False):
     cam = PiCamera(resolution=cfg.CAMERA_RESOLUTION)
     V.add(cam, outputs=['cam/image_array'], threaded=True)
 
-    ctr = LocalWebController(use_chaos=use_chaos)
+    if use_joystick or cfg.USE_JOYSTICK_AS_DEFAULT:
+#        ctr = JoystickController(max_throttle=cfg.JOYSTICK_MAX_THROTTLE,
+#                                 steering_scale=cfg.JOYSTICK_STEERING_SCALE,
+#                                 auto_record_on_throttle=cfg.AUTO_RECORD_ON_THROTTLE)
+        ctr = PS3JoystickController(
+          throttle_scale=cfg.JOYSTICK_MAX_THROTTLE,
+          steering_scale=cfg.JOYSTICK_STEERING_SCALE,
+          auto_record_on_throttle=cfg.AUTO_RECORD_ON_THROTTLE)
+
+
+    else:
+        # This web controller will create a web server that is capable
+        # of managing steering, throttle, and modes, and more.
+        ctr = LocalWebController(use_chaos=use_chaos)
+
     V.add(ctr,
-          inputs=inputs,
+          inputs=['cam/image_array'],
           outputs=['user/angle', 'user/throttle', 'user/mode', 'recording'],
           threaded=True)
 
