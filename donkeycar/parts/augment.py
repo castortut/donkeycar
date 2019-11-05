@@ -1,8 +1,8 @@
-'''
+"""
     File: augment.py
     Author : Tawn Kramer
     Date : July 2017
-'''
+"""
 import random
 from PIL import Image
 from PIL import ImageEnhance
@@ -14,17 +14,22 @@ import math
     find_coeffs and persp_transform borrowed from:
     https://stackoverflow.com/questions/14177744/how-does-perspective-transformation-work-in-pil
 '''
+
+
 def find_coeffs(pa, pb):
     matrix = []
     for p1, p2 in zip(pa, pb):
         matrix.append([p1[0], p1[1], 1, 0, 0, 0, -p2[0]*p1[0], -p2[0]*p1[1]])
         matrix.append([0, 0, 0, p1[0], p1[1], 1, -p2[1]*p1[0], -p2[1]*p1[1]])
 
+    # noinspection PyPep8Naming
     A = np.matrix(matrix, dtype=np.float)
+    # noinspection PyPep8Naming
     B = np.array(pb).reshape(8)
 
     res = np.dot(np.linalg.inv(A.T * A) * A.T, B)
     return np.array(res).reshape(8)
+
 
 def rand_persp_transform(img):
     width, height = img.size
@@ -36,11 +41,12 @@ def rand_persp_transform(img):
 
     return img.transform((width, height), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
 
+
 def augment_image(np_img, shadow_images=None, do_warp_persp=False):
     conv_img = np_img * 255.0
     conv_img = conv_img.astype(np.uint8)
     img = Image.fromarray(conv_img)
-    #change the coloration, sharpness, and composite a shadow
+    # change the coloration, sharpness, and composite a shadow
     factor = random.uniform(0.5, 2.0)
     img = ImageEnhance.Brightness(img).enhance(factor)
     factor = random.uniform(0.5, 1.0)
@@ -54,6 +60,7 @@ def augment_image(np_img, shadow_images=None, do_warp_persp=False):
         '''
         optionaly composite a shadow, perpared from load_shadow_images
         '''
+        # noinspection PyPep8Naming
         iShad = random.randrange(0, len(shadow_images))
         top, mask = shadow_images[iShad]
         theta = random.randrange(-35, 35)
@@ -71,6 +78,7 @@ def augment_image(np_img, shadow_images=None, do_warp_persp=False):
 
     return np.array(img).astype(np.float) / 255.0
 
+
 def load_shadow_images(path_mask):
     shadow_images = []
     filenames = glob.glob(path_mask)
@@ -85,5 +93,3 @@ def load_shadow_images(path_mask):
         mask = Image.merge("L", (a,))
         shadow_images.append((top, mask))
     return shadow_images
-
-
