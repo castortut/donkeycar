@@ -147,16 +147,19 @@ def load_scaled_image_arr(filename, cfg):
     also apply cropping and normalize
     '''
     import donkeycar as dk
+
     try:
         img = Image.open(filename)
         if img.height != cfg.IMAGE_H or img.width != cfg.IMAGE_W:
             img = img.resize((cfg.IMAGE_W, cfg.IMAGE_H))
         img_arr = np.array(img)
+        img_arr = img_arr[..., np.newaxis]
         img_arr = normalize_and_crop(img_arr, cfg)
         croppedImgH = img_arr.shape[0]
         croppedImgW = img_arr.shape[1]
-        if img_arr.shape[2] == 3 and cfg.IMAGE_DEPTH == 1:
-            img_arr = dk.utils.rgb2gray(img_arr).reshape(croppedImgH, croppedImgW, 1)
+        #print(img_arr.shape)
+        #if img_arr.shape[2] == 3 and cfg.IMAGE_DEPTH == 1:
+        #    img_arr = dk.utils.rgb2gray(img_arr).reshape(croppedImgH, croppedImgW, 1)
     except Exception as e:
         print(e)
         print('failed to load image:', filename)

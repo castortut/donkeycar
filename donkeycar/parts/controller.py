@@ -211,7 +211,6 @@ class JoystickCreator(Joystick):
 
         return button, button_state, axis, axis_val
 
-
 class PS3JoystickOld(Joystick):
     '''
     An interface to a physical PS3 joystick available at /dev/input/js0
@@ -626,6 +625,26 @@ class RC3ChanJoystick(Joystick):
             0x1 : 'Throttle',
             0x0 : 'Steering',
         }
+
+class GT5Joystick(Joystick):
+    #An interface to a physical joystick available at /dev/input/js0
+    def __init__(self, *args, **kwargs):
+        super(GT5Joystick, self).__init__(*args, **kwargs)
+
+
+        self.button_names = {
+            0x134 : 'Switch-up',
+            0x135 : 'Switch-down',
+        }
+
+
+        self.axis_names = {
+            0x01 : 'Throttle',
+            0x00 : 'Steering',
+            0x03 : 'ch3',
+            0x04 : 'ch4'
+        }
+
 
 
 class JoystickController(object):
@@ -1141,6 +1160,7 @@ class LogitechJoystickController(JoystickController):
     credit:
     https://github.com/kevkruemp/donkeypart_logitech_controller/blob/master/donkeypart_logitech_controller/part.py
     '''
+
     def __init__(self, *args, **kwargs):
         super(LogitechJoystickController, self).__init__(*args, **kwargs)
 
@@ -1324,6 +1344,60 @@ class RC3ChanJoystickController(JoystickController):
             'Throttle' : self.on_throttle,
         }
 
+class GT5JoystickController(JoystickController):
+    #A Controller object that maps inputs to actions
+    def __init__(self, *args, **kwargs):
+        super(GT5JoystickController, self).__init__(*args, **kwargs)
+
+
+    def init_js(self):
+        #attempt to init joystick
+        try:
+            self.js = GT5Joystick(self.dev_fn)
+            self.js.init()
+        except FileNotFoundError:
+            print(self.dev_fn, "not found.")
+            self.js = None
+        return self.js is not None
+
+    # def on_steering(self, val, reverse = True):
+    #     if reversed:
+    #         val *= -1
+    #     self.set_steering(val)
+    #
+    # def on_throttle(self, val, reverse = True):
+    #     if reversed:
+    #         val *= -1
+    #     self.set_throttle(val)
+    #
+    # def on_switch_up(self):
+    #     if self.mode == 'user':
+    #         self.erase_last_N_records()
+    #     else:
+    #         self.emergency_stop()
+    #
+    # def on_switch_down(self):
+    #     self.toggle_mode()
+
+    def init_trigger_maps(self):
+        #init set of mapping from buttons to function calls
+
+        # self.button_down_trigger_map = {
+        #     'Switch-down' : self.on_switch_down,
+        #     'Switch-up' : self.on_switch_up,
+        # }
+
+
+        #self.axis_trigger_map = {
+        #    'Steering' : self.set_steering,
+        #    'Throttle' : self.set_throttle,
+        #    'ch3'      : self.toggle_mode
+        #}
+        self.axis_trigger_map = {
+            'Steering' : self.set_steering,
+            'Throttle' : self.set_throttle
+        }
+
 
 class JoyStickPub(object):
     '''
@@ -1418,6 +1492,8 @@ def get_js_controller(cfg):
         cont_class = LogitechJoystickController
     elif cfg.CONTROLLER_TYPE == "rc3":
         cont_class = RC3ChanJoystickController
+    elif cfg.CONTROLLER_TYPE == "gt5":
+        cont_class = GT5JoystickController
     else:
         raise("Unknown controller type: " + cfg.CONTROLLER_TYPE)
 
@@ -1435,8 +1511,22 @@ if __name__ == "__main__":
     when running from ubuntu 16.04, it will interfere w mouse until:
     xinput set-prop "Sony PLAYSTATION(R)3 Controller" "Device Enabled" 0
     '''
-    print("You may need:")
-    print('xinput set-prop "Sony PLAYSTATION(R)3 Controller" "Device Enabled" 0')
-    p = JoyStickPub()
-    p.run()
+    #print("You may need:")
+    #print('xinput set-prop "Sony PLAYSTATION(R)3 Controller" "Device Enabled" 0')
+    #p = JoyStickPub()
+    #p.run()
+    js = JoystickCreator(dev_fn='/dev/input/js0')
+    js.init()
+    js.show_map()
+    for i in range(0,50):
+        #button,button_state,axis,axis_val = js.poll()
+        print(js.poll())
+        time.sleep(0.1)
+    # 0x00 -1 ... 1: ratti
+    # 0x01 -1 ... 1: kaasu
+    # 0x04 -1, 0, 1: ch4
+    # 0x03     -1/1: ch3
+    # 0x134 0,    1: ch5 ('button')
+    # 0x135 0,    1: ch6 ('button')
+    # todo: joystick ja joystickcontroller gt5:lle
 

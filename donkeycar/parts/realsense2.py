@@ -71,7 +71,8 @@ class RS_T265(object):
             self.poll()
 
     def run_threaded(self):
-        return self.pos, self.vel, self.acc, self.img
+        #return self.pos, self.vel, self.acc, self.img
+        return self.img
 
     def run(self):
         self.poll()
