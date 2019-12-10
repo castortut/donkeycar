@@ -1518,7 +1518,7 @@ if __name__ == "__main__":
     js = JoystickCreator(dev_fn='/dev/input/js0')
     js.init()
     js.show_map()
-    for i in range(0,50):
+    while True:
         #button,button_state,axis,axis_val = js.poll()
         print(js.poll())
         time.sleep(0.1)
@@ -1528,5 +1528,3 @@ if __name__ == "__main__":
     # 0x03     -1/1: ch3
     # 0x134 0,    1: ch5 ('button')
     # 0x135 0,    1: ch6 ('button')
-    # todo: joystick ja joystickcontroller gt5:lle
-

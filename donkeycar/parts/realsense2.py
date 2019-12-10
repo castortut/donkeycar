@@ -17,10 +17,11 @@ class RS_T265(object):
     is remarkably consistent.
     '''
 
-    def __init__(self, image_output=False):
+    def __init__(self, image_output=False, pose_output=True):
         #Using the image_output will grab two image streams from the fisheye cameras but return only one.
         #This can be a bit much for USB2, but you can try it. Docs recommend USB3 connection for this.
         self.image_output = image_output
+        self.pose_output = pose_output
 
         # Declare RealSense pipeline, encapsulating the actual device and sensors
         self.pipe = rs.pipeline()
@@ -54,10 +55,11 @@ class RS_T265(object):
             # Left fisheye camera frame
             left = frames.get_fisheye_frame(1)
             self.img = np.asanyarray(left.get_data())
+            print(self.img.shape)
 
-
-        # Fetch pose frame
-        pose = frames.get_pose_frame()
+        if self.pose_output:
+            # Fetch pose frame
+            pose = frames.get_pose_frame()
 
         if pose:
             data = pose.get_pose_data()
