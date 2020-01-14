@@ -132,6 +132,8 @@ def img_crop(img_arr, top, bottom):
 
 def normalize_and_crop(img_arr, cfg):
     img_arr = img_arr.astype(np.float32) * one_byte_scale
+    if img_arr.ndim == 2: # lisatty
+        img_arr = img_arr[..., np.newaxis]
     if cfg.ROI_CROP_TOP or cfg.ROI_CROP_BOTTOM:
         img_arr = img_crop(img_arr, cfg.ROI_CROP_TOP, cfg.ROI_CROP_BOTTOM)
         if len(img_arr.shape) == 2:
@@ -153,13 +155,15 @@ def load_scaled_image_arr(filename, cfg):
         if img.height != cfg.IMAGE_H or img.width != cfg.IMAGE_W:
             img = img.resize((cfg.IMAGE_W, cfg.IMAGE_H))
         img_arr = np.array(img)
-        img_arr = img_arr[..., np.newaxis]
         img_arr = normalize_and_crop(img_arr, cfg)
         croppedImgH = img_arr.shape[0]
         croppedImgW = img_arr.shape[1]
+        #print("Image shape: ")
         #print(img_arr.shape)
-        #if img_arr.shape[2] == 3 and cfg.IMAGE_DEPTH == 1:
-        #    img_arr = dk.utils.rgb2gray(img_arr).reshape(croppedImgH, croppedImgW, 1)
+        if img_arr.ndim == 2:
+            img_arr = img_arr[..., np.newaxis] # BW images must be (h,w,1) dimensioned
+        if img_arr.shape[2] == 3 and cfg.IMAGE_DEPTH == 1:
+            img_arr = dk.utils.rgb2gray(img_arr).reshape(croppedImgH, croppedImgW, 1)
     except Exception as e:
         print(e)
         print('failed to load image:', filename)
@@ -541,3 +545,4 @@ class FPSTimer(object):
             print('fps', 100.0 / (e - self.t))
             self.t = time.time()
             self.iter = 0
+
