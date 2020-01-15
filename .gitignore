@@ -3,6 +3,9 @@ env/*
 data/*
 dist/*
 
+mycar/data/
+mycar/models/
+
 *.pyc
 .ipynb_checkpoints
 *.egg-info/
