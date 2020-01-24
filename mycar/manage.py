@@ -116,6 +116,9 @@ def drive(cfg, model_path=None, use_joystick=False, model_type=None, camera_type
         elif cfg.CAMERA_TYPE == "T265":
             from donkeycar.parts.realsense2 import RS_T265
             cam = RS_T265(image_output=True)
+        elif cfg.CAMERA_TYPE == "D435":
+            from donkeycar.parts.realsense2 import RS_D435
+            cam = RS_D435(image_w=cfg.IMAGE_W, image_h=cfg.IMAGE_H, framerate=cfg.CAMERA_FRAMERATE, image_output=True)
         else:
             raise(Exception("Unkown camera type: %s" % cfg.CAMERA_TYPE))
             

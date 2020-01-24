@@ -16,18 +16,21 @@ DATA_PATH = os.path.join(CAR_PATH, 'data')
 MODELS_PATH = os.path.join(CAR_PATH, 'models')
 # 
 # #VEHICLE
-# DRIVE_LOOP_HZ = 20      # the vehicle loop will pause if faster than this speed.
+DRIVE_LOOP_HZ = 20      # the vehicle loop will pause if faster than this speed.
 # MAX_LOOPS = None        # the vehicle loop can abort after this many iterations, when given a positive integer.
 # 
 # #CAMERA
-CAMERA_TYPE = "T265"   # (PICAM|WEBCAM|CVCAM|CSIC|V4L|MOCK|T265)
+CAMERA_TYPE = "D435"   # (PICAM|WEBCAM|CVCAM|CSIC|V4L|MOCK|T265|D435)
 #IMAGE_W = 224
 #IMAGE_H = 224
-IMAGE_W = 848 # 320
-IMAGE_H = 800 # 180
-IMAGE_DEPTH = 1         # default RGB=3, make 1 for mono
+# IMAGE_W = 848  # 320
+# IMAGE_H = 800  # 180
+IMAGE_W = 320
+IMAGE_H = 180
+IMAGE_DEPTH = 3         # default RGB=3, make 1 for mono
 
 # CAMERA_FRAMERATE = DRIVE_LOOP_HZ
+CAMERA_FRAMERATE = 60
 # # For CSIC camera - If the camera is mounted in a rotated position, changing the below parameter will correct the output frame orientation
 CSIC_CAM_GSTREAMER_FLIP_PARM = 6 # (0 => none , 4 => Flip horizontally, 6 => Flip vertically)
 # 
@@ -73,7 +76,7 @@ THROTTLE_REVERSE_PWM = 560  #pwm value for max reverse throttle
 # #between different neural network designs. You can override this setting by passing the command
 # #line parameter --type to the python manage.py train and drive commands.
 # DEFAULT_MODEL_TYPE = 'linear'   #(linear|categorical|rnn|imu|behavior|3d|localizer|latent)
-BATCH_SIZE = 8                #how many records to use when doing one pass of gradient decent. Use a smaller number if your gpu is running out of memory.
+BATCH_SIZE = 64                #how many records to use when doing one pass of gradient decent. Use a smaller number if your gpu is running out of memory.
 # TRAIN_TEST_SPLIT = 0.8          #what percent of records to use for training. the remaining used for validation.
 # MAX_EPOCHS = 100                #how many times to visit all records of your data
 # SHOW_PLOT = True                #would you like to see a pop up display of final loss?
@@ -86,8 +89,7 @@ BATCH_SIZE = 8                #how many records to use when doing one pass of gr
 # LEARNING_RATE = 0.001           #only used when OPTIMIZER specified
 # LEARNING_RATE_DECAY = 0.0       #only used when OPTIMIZER specified
 # SEND_BEST_MODEL_TO_PI = False   #change to true to automatically send best model during training
-#CACHE_IMAGES = True
-CACHE_IMAGES = False             #keep images in memory. will speed succesive epochs, but crater if not enough mem.
+CACHE_IMAGES = True             #keep images in memory. will speed succesive epochs, but crater if not enough mem.
 # 
 # PRUNE_CNN = False               #This will remove weights from your model. The primary goal is to increase performance.
 # PRUNE_PERCENT_TARGET = 75       # The desired percentage of pruning.
