@@ -133,17 +133,27 @@ class RS_T265(RS_CAM):
     is remarkably consistent.
     '''
 
-    def __init__(self, image_output=True, pose_output=False):
+    def __init__(self, image_output=True, pose_output=False, calib_filename=None):
         super().__init__(image_output)
 
         self.pose_output = pose_output
 
+        # When we have and encoder, this will be the last vel measured.
+        self.enc_vel_ms = 0.0
+        self.wheel_odometer = None
+
         # # Declare RealSense pipeline, encapsulating the actual device and sensors
         # self.pipe = rs.pipeline()
         # self.cfg = rs.config()
-        
+
         if self.pose_output:
             self.cfg.enable_stream(rs.stream.pose)
+
+        # Declare RealSense pipeline, encapsulating the actual device and sensors
+        print("Starting T265")
+        profile = self.cfg.resolve(self.pipe)
+        dev = profile.get_device()
+        tm2 = dev.as_tm2()
 
         # Using the image_output will grab two image streams from the fisheye cameras but return only one.
         # This can be a bit much for USB2, but you can try it. Docs recommend USB3 connection for this.
@@ -152,16 +162,42 @@ class RS_T265(RS_CAM):
             self.cfg.enable_stream(rs.stream.fisheye, 1)  # Left camera
             self.cfg.enable_stream(rs.stream.fisheye, 2)  # Right camera
 
+        if calib_filename is not None:
+            pose_sensor = tm2.first_pose_sensor()
+            self.wheel_odometer = pose_sensor.as_wheel_odometer()
+
+            # calibration to list of uint8
+            f = open(calib_filename)
+            chars = []
+            for line in f:
+                for c in line:
+                    chars.append(ord(c))  # char to uint8
+
+            # load/configure wheel odometer
+            print("loading wheel config", calib_filename)
+            self.wheel_odometer.load_wheel_odometery_config(chars)
+
+
         # Start streaming with requested config
         self.pipe.start(self.cfg)
         self.running = True
-        
+        print("Warning: T265 needs a warmup period of a few seconds before it will emit tracking data.")
+
         zero_vec = (0.0, 0.0, 0.0)
         self.pos = zero_vec
         self.vel = zero_vec
         self.acc = zero_vec
 
     def poll(self):
+
+        if self.wheel_odometer:
+            wo_sensor_id = 0  # indexed from 0, match to order in calibration file
+            frame_num = 0  # not used
+            v = rs.vector()
+            v.x = -1.0 * self.enc_vel_ms  # m/s
+            #v.z = -1.0 * self.enc_vel_ms  # m/s
+            self.wheel_odometer.send_wheel_odometry(wo_sensor_id, frame_num, v)
+
         try:
             frames = self.pipe.wait_for_frames()
         except Exception as e:
@@ -186,13 +222,31 @@ class RS_T265(RS_CAM):
             self.acc = data.acceleration
             logging.debug('realsense pos(%f, %f, %f)' % (self.pos.x, self.pos.y, self.pos.z))
 
-    def run_threaded(self):
+
+    def update(self):
+        while self.running:
+            self.poll()
+
+    def run_threaded(self, enc_vel_ms):
+        # self.enc_vel_ms = enc_vel_ms
+        # return self.pos, self.vel, self.acc, self.img
         if self.image_output and self.pose_output:
             return self.pos, self.vel, self.acc, self.img
         if self.image_output:
             return self.img
         if self.pose_output:
             return self.pos, self.vel, self.acc
+
+    def run(self, enc_vel_ms):
+        self.enc_vel_ms = enc_vel_ms
+        self.poll()
+        return self.run_threaded()
+
+    def shutdown(self):
+        self.running = False
+        time.sleep(0.1)
+        self.pipe.stop()
+
 
 
 if __name__ == "__main__":
